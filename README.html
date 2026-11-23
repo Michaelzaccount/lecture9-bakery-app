@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bakery orders · User and implementation guide</title>
+<style>
+*{box-sizing:border-box}body{max-width:54rem;margin:auto;padding:clamp(1rem,4vw,3rem);font:1.05rem/1.6 system-ui,sans-serif;color:#25364a;background:#fcfaf7}h1,h2{font-family:Georgia,serif;line-height:1.15}h1{font-size:2.6rem}h2{margin-top:2rem}a{color:#184e80}li{margin:.6rem 0}table{border-collapse:collapse;width:100%}td,th{text-align:left;border-bottom:1px solid #c6cbd0;padding:.5rem}code,kbd{background:#ebe8e2;padding:.1rem .3rem}dt{font-weight:650}dd{margin:0 0 .8rem}nav{display:flex;gap:1rem;flex-wrap:wrap}
+</style>
+</head>
+<body><main>
+<h1>Bakery orders</h1>
+<p>Use the dashboard to turn Instagram requests into a pickup schedule. Recording a message puts it in the review queue. Accepting it updates the schedule and sales.</p>
+<nav aria-label="Guide sections"><a href="#start">Start the app</a><a href="#review">Manage requests</a><a href="#rules">Plan capacity</a><a href="#implementation">Implementation</a></nav>
+<h2 id="start">Start the app</h2>
+<p>For the updated app launched in this project session, <a href="http://127.0.0.1:8002/">open the dashboard on port 8002</a>.</p>
+<ol>
+<li>To start a fresh session on Mac, find <strong>Lecture 9_Tools</strong> in Finder. Control-click the folder and choose <strong>New Terminal at Folder</strong> (it may appear under Services).</li>
+<li>Type <code>python3 app.py</code> and press Return. Keep Terminal open. The app uses Python 3.9 or later and the Python standard library.</li>
+<li>Open the <a href="http://127.0.0.1:8000/">default dashboard on port 8000</a>. To stop a server you started, press <kbd>Control</kbd> + <kbd>C</kbd> in its Terminal window. Saved orders remain in the project folder.</li>
+</ol>
+<h2 id="review">Manage requests</h2>
+<ol>
+<li><strong>Choose the day the DM arrived.</strong> Set <strong>Working date</strong> and select <strong>View day</strong>. The dashboard starts on Monday, November 23, 2026. Switching dates lets you revisit pending decisions.</li>
+<li><strong>Record the request.</strong> Expand <strong>Record an Instagram DM</strong>, enter the customer name, request type and pickup date, then select <strong>Save for review</strong>. For an order or change, enter one product and its full requested quantity. For changes and cancellations, use the same customer name and pickup date as the accepted order. The app needs exactly one match.</li>
+<li><strong>Review the decision.</strong> Find a new order under <strong>New requests</strong> or <strong>Incompatible orders</strong>. Changes and cancellations have their own section. Select <strong>Accept request</strong> or <strong>Reject request</strong>. Each blocked request shows the reason. A change replaces the existing quantity and product. A cancellation frees the booked time and removes the sale.</li>
+<li><strong>Check pickups.</strong> The selected day lists accepted pickups at 5 PM. <strong>Upcoming days</strong> shows each day’s orders, hours and helper booking. Expand <strong>Decided requests</strong> to see decisions for messages received on the selected day.</li>
+</ol>
+<p><strong>Using the lecture DMs?</strong> The seven supplied daily files cover November 23–29, 2026. The app imports them on first setup. <strong>Fetch new DMs</strong> rereads the selected day’s file and skips messages already present with the same date and text. For messages from your Instagram account, use manual entry.</p>
+<p><strong>Accept all and go to next day</strong> processes pending requests, including changes and cancellations, in saved order. It checks capacity after each acceptance. Requests that fail a check stay pending on their original day. You can advance each day once.</p>
+<h2 id="rules">Plan capacity and sales</h2>
+<table><thead><tr><th scope="col">Product and unit</th><th scope="col">Price</th><th scope="col">Pickup-day time</th></tr></thead>
+<tbody><tr><td>1 dozen cupcakes</td><td>$40</td><td>30 minutes</td></tr><tr><td>1 cake</td><td>$120</td><td>2 hours</td></tr></tbody></table>
+<p>Each pickup day has eight baking hours. To book one helper, select <strong>+4 h · $100</strong> under that pickup day. This records a $100 cost and raises capacity to twelve hours. Review the pending request again after booking.</p>
+<p>Orders, changes and cancellations require two calendar days between the DM date and pickup. Helper bookings use the selected working date for the same check. For example, a Monday request can qualify for Wednesday pickup. With seven hours already booked, a Wednesday cake would bring the total to nine hours and require a helper.</p>
+<p><strong>After helpers</strong> is the value of all active accepted orders minus all helper booking costs. Ingredient and other expenses are outside this calculation.</p>
+<h2 id="implementation">Implementation and storage</h2>
+<dl>
+<dt><code>app.py</code> · web server and decision rules</dt>
+<dd>Python serves the dashboard on the local loopback address. A GET request renders HTML from SQLite. Forms submit POST requests to record messages, make decisions and book helpers. Each action runs in a database transaction and redirects back to the dashboard after success. The server rechecks notice, matching orders and capacity before accepting a request.</dd>
+<dt><code>bakery.db</code> · saved state</dt>
+<dd>The <code>messages</code> table tracks the received date, request details and decision. The <code>orders</code> table holds accepted orders, with an active flag for cancellations. The <code>helpers</code> table allows one booking per pickup date. The <code>metadata</code> table records initial import and which days have advanced.</dd>
+<dt><code>existing_orders.csv</code> and <code>InstagramOrders_*.html</code> · starting data</dt>
+<dd>On first setup, the app loads existing orders from the CSV and extracts message paragraphs from the daily HTML files. Later launches reuse the database. To back up your work, stop running instances and copy <code>bakery.db</code>. Use a copy of the database for tests.</dd>
+</dl>
+</main></body></html>
